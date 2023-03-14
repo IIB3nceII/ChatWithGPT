@@ -8,12 +8,26 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @EnvironmentObject var authViewModel: AuthViewModel
+    /// State variable to store the current tab index.
+    @State private var selectedIndex = 0
 
     var body: some View {
-        Text("Main tab view")
-        Button { authViewModel.logout() } label: {
-            Text("Logout")
+        TabView(selection: $selectedIndex) {
+            ChatView()
+                .onTapGesture {
+                    self.selectedIndex = 0
+                }
+                .tabItem {
+                    Image(systemName: "message.fill")
+                }.tag(0)
+
+            SettingsView()
+                .onTapGesture {
+                    self.selectedIndex = 0
+                }
+                .tabItem {
+                    Image(systemName: "transmission")
+                }.tag(1)
         }
     }
 }

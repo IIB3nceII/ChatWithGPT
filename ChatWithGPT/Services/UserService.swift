@@ -7,7 +7,9 @@
 
 import Foundation
 
+// TODO: Migrate to core data.
 struct UserService {
+    /// Error enum to specify the possible errors.
     enum UserServiceError: Error {
         case userNotFound
         case invalidAPIKey
@@ -31,6 +33,7 @@ struct UserService {
         }
     }
 
+    /// Inits the user session from data store.
     func initUserSession() throws -> User {
         let defaults = UserDefaults.standard
 
@@ -47,9 +50,15 @@ struct UserService {
         }
     }
 
+    /// Creates a new user in the data storage.
     func createUser(email: String, apiKey: String) throws -> Bool {
         let defaults = UserDefaults.standard
-        let newUser = User(id: UUID().uuidString, email: email, apiKey: apiKey, lastApiKeyUpdate: Date.now)
+        let newUser = User(
+            id: UUID().uuidString,
+            email: email.trimmingCharacters(in: .whitespacesAndNewlines),
+            apiKey: apiKey.trimmingCharacters(in: .whitespacesAndNewlines),
+            lastApiKeyUpdate: Date.now
+        )
 
         do {
             let encoder = JSONEncoder()
@@ -61,6 +70,7 @@ struct UserService {
         }
     }
 
+    /// Deletes the current user from data storage.
     func logout() {
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: "user")

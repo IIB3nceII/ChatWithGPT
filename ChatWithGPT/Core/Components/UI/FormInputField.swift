@@ -8,8 +8,13 @@
 import SwiftUI
 
 struct FormInputField: View {
+    /// Binding to store the current value of the field.
     @Binding var text: String
+
+    /// Placeholder text of the input.
     let placeholderText: String
+
+    /// True is field is secured.
     var isSecureField: Bool? = false
 
     var body: some View {

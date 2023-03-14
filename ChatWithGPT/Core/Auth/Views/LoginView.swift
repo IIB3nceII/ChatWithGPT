@@ -9,9 +9,14 @@ import Foundation
 import SwiftUI
 
 struct LoginView: View {
+    /// Env object for auth view model.
+    @EnvironmentObject private var authViewModel: AuthViewModel
+
+    /// State var to store the email address of the user.
     @State private var email = ""
+
+    /// State var to store the api key of the user.
     @State private var apiKey = ""
-    @EnvironmentObject var authViewModel: AuthViewModel
 
     var body: some View {
         VStack {
