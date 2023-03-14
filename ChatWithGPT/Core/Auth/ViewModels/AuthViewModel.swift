@@ -11,6 +11,8 @@ class AuthViewModel: ObservableObject {
     @Published var user: User? = nil
     @Published var isAuthenticated: Bool = false
 
+    let userService = UserService()
+
     init() {
         self.initUserSession()
     }
@@ -19,13 +21,30 @@ class AuthViewModel: ObservableObject {
         reset()
     }
 
+    func createUser(email: String, apiKey: String) {
+        do {
+            let isUserCreated = try self.userService.createUser(email: email, apiKey: apiKey)
+
+            if isUserCreated {
+                self.initUserSession()
+            }
+        } catch {
+            print("DEBUG: \(error.localizedDescription)")
+        }
+    }
+
+    func logout() {
+        self.userService.logout()
+        self.reset()
+    }
+
     private func initUserSession() {
-        let defaults = UserDefaults.standard
-
-        guard let currentUser = defaults.object(forKey: "user") as? User else { return }
-
-        self.user = currentUser
-        self.isAuthenticated = true
+        do {
+            self.user = try self.userService.initUserSession()
+            self.isAuthenticated = true
+        } catch {
+            print("\(error.localizedDescription)")
+        }
     }
 
     private func reset() {

@@ -14,9 +14,11 @@ struct ChatWithGPTApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-                .environmentObject(viewModel)
-                .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            NavigationStack {
+                ContentView()
+                    .environmentObject(viewModel)
+                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+            }
         }
     }
 }

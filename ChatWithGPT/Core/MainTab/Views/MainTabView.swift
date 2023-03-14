@@ -8,8 +8,13 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @EnvironmentObject var authViewModel: AuthViewModel
+
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Text("Main tab view")
+        Button { authViewModel.logout() } label: {
+            Text("Logout")
+        }
     }
 }
 

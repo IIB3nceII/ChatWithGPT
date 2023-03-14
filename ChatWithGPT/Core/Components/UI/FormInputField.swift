@@ -1,0 +1,35 @@
+//
+//  ForminputField.swift
+//  ChatWithGPT
+//
+//  Created by Bence Papp on 2023. 03. 14..
+//
+
+import SwiftUI
+
+struct FormInputField: View {
+    @Binding var text: String
+    let placeholderText: String
+    var isSecureField: Bool? = false
+
+    var body: some View {
+        HStack {
+            if isSecureField ?? false {
+                SecureField(placeholderText, text: $text)
+            } else {
+                TextField(placeholderText, text: $text)
+            }
+        }
+        .padding()
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(.secondary)
+        )
+    }
+}
+
+struct FormInputField_Previews: PreviewProvider {
+    static var previews: some View {
+        FormInputField(text: .constant(""), placeholderText: "Email")
+    }
+}
