@@ -9,11 +9,13 @@ import SwiftUI
 
 @main
 struct ChatWithGPTApp: App {
+    @StateObject var viewModel = AuthViewModel()
     let persistenceController = PersistenceController.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(viewModel)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
