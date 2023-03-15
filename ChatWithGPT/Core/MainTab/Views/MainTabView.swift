@@ -8,12 +8,15 @@
 import SwiftUI
 
 struct MainTabView: View {
+    /// Environment object for auth view model.
+    @EnvironmentObject private var authViewModel: AuthViewModel
+
     /// State variable to store the current tab index.
     @State private var selectedIndex = 0
 
     var body: some View {
         TabView(selection: $selectedIndex) {
-            ChatView()
+            ChatView(apiKey: authViewModel.user?.apiKey ?? "")
                 .onTapGesture {
                     self.selectedIndex = 0
                 }

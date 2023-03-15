@@ -11,6 +11,12 @@ struct ChatView: View {
     /// State variable to store the current value of text input.
     @State private var text: String = ""
 
+    @ObservedObject private var chatViewModel: ChatViewModel
+
+    init(apiKey: String) {
+        chatViewModel = ChatViewModel(apiKey: apiKey)
+    }
+
     var body: some View {
         VStack {
             headerView
@@ -38,7 +44,9 @@ extension ChatView {
             Spacer()
             LazyVStack {
                 ScrollView {
-                    Text("ChatGPT is available")
+                    ForEach(chatViewModel.messages, id: \.self) { message in
+                        Text(message)
+                    }
                 }
             }
             Spacer()
@@ -49,6 +57,14 @@ extension ChatView {
 // MARK: - Input View
 
 extension ChatView {
+    func handleSendMessage(_ text: String) {
+        chatViewModel.sendMessage(text) { success in
+            if success {
+                self.text = ""
+            }
+        }
+    }
+
     var inputView: some View {
         HStack(spacing: 16) {
             Image(systemName: "mic")
@@ -56,11 +72,11 @@ extension ChatView {
             TextField("type something...", text: $text)
                 .submitLabel(.send)
                 .onSubmit {
-                    print("Send")
+                    self.handleSendMessage(self.text)
                 }
 
             Button {
-                print("Send")
+                self.handleSendMessage(self.text)
             }
             label: {
                 Image(systemName: "paperplane.fill")
@@ -74,6 +90,6 @@ extension ChatView {
 
 struct ChatView_Previews: PreviewProvider {
     static var previews: some View {
-        ChatView()
+        ChatView(apiKey: "")
     }
 }

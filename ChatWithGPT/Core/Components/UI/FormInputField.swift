@@ -21,8 +21,10 @@ struct FormInputField: View {
         HStack {
             if isSecureField ?? false {
                 SecureField(placeholderText, text: $text)
+                    .autocapitalization(.none)
             } else {
                 TextField(placeholderText, text: $text)
+                    .autocapitalization(.none)
             }
         }
         .padding()
