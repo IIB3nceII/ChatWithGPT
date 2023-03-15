@@ -65,9 +65,20 @@ extension ChatView {
         }
     }
 
+    func onSpeechToText() {
+        chatViewModel.onTranscribeStartStop()
+        if let message = chatViewModel.latestMessage {
+            text = message
+        }
+    }
+
     var inputView: some View {
         HStack(spacing: 16) {
-            Image(systemName: "mic")
+            Button{
+                self.onSpeechToText()
+            }label: {
+                Image(systemName: chatViewModel.isRecording ? "mic.fill" : "mic")
+            }
 
             TextField("type something...", text: $text)
                 .submitLabel(.send)
