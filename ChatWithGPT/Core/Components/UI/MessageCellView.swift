@@ -24,16 +24,18 @@ struct MessageCellView: View {
 
                 VStack(alignment: .leading) {
                     Text(message.text)
-                    Text(message.errorText)
-                        .foregroundColor(Color.pink)
-                    if message.isInteracting {
+                    if message.errorText != "" {
+                        Text(message.errorText)
+                            .foregroundColor(Color.pink)
+                    }
+                    if message.isInteracting && message.role == .system {
                         LoadingView()
                     }
                 }
                 .padding()
                 .foregroundColor(Color.white)
                 .background(Color.blue)
-                .cornerRadius(12)
+                .cornerRadius(14)
 
                 if message.role == .user {
                     Image(systemName: "person.circle")

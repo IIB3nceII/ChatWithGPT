@@ -8,13 +8,18 @@
 import SwiftUI
 
 struct SettingsView: View {
-    /// Environment object for auth view model.
-    @EnvironmentObject private var authViewModel: AuthViewModel
+    @ObservedObject var chatViewModel = ChatViewModel()
+
+    @AppStorage("apiKey") var apiKey: String = ""
 
     var body: some View {
-        Button { authViewModel.logout() } label: {
-            Text("Logout")
+        VStack {
+            VoicePicker(selectedVoice: $chatViewModel.selectedVoice)
+
+            TextField("API key", text: $apiKey)
+                .textFieldStyle(.roundedBorder)
         }
+        .padding()
     }
 }
 

@@ -9,10 +9,16 @@ import SwiftUI
 
 struct ChatView: View {
     @AppStorage("hasApiKey") var hasApiKey: Bool = false
-    @ObservedObject var viewModel = ChatViewModel()
+    @ObservedObject var chatViewModel = ChatViewModel()
     @FocusState var isFocus: Bool
     @State var isPresentedTipView: Bool = false
     @State private var animateMicCircle = false
+
+    private let iconSize: CGFloat = 24
+
+    init() {
+        chatViewModel.messages.append(Message(role: .system, text: "Hi, How can I help you today?", isInteracting: false, errorText: ""))
+    }
 
     // MARK: - life cycle
 
@@ -21,7 +27,7 @@ struct ChatView: View {
             ScrollViewReader { scrollViewReader in
                 ScrollView {
                     LazyVStack(spacing: 16) {
-                        ForEach(viewModel.messages) { message in
+                        ForEach(chatViewModel.messages) { message in
                             MessageCellView(message: message)
                         }
                     }
@@ -29,78 +35,52 @@ struct ChatView: View {
                 .onTapGesture {
                     isFocus = false
                 }
-                .onChange(of: viewModel.messages.last?.text) { _ in
+                .onChange(of: chatViewModel.messages.last?.text) { _ in
                     scrollToBottom(proxy: scrollViewReader)
                 }
-                .onChange(of: viewModel.messages.last?.errorText) { _ in
+                .onChange(of: chatViewModel.messages.last?.errorText) { _ in
                     scrollToBottom(proxy: scrollViewReader)
                 }
             }
-            VStack(alignment: .leading) {
-                HStack {
-                    if viewModel.showMoreOptions {
-                        Button {
-                            viewModel.showMoreOptions.toggle()
-                        } label: {
-                            Image(systemName: "chevron.compact.down")
-                                .padding(.vertical, 6)
-                        }
-                        .keyboardShortcut(.downArrow)
+            HStack {
+                Button {
+                    chatViewModel.clearMessages()
+                } label: {
+                    Image(systemName: "trash.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: iconSize, height: iconSize)
+                }
+                .tint(.blue)
+                .keyboardShortcut("d")
+
+                muteButton
+
+                micButton
+                Group {
+                    if #available(iOS 16.0, macOS 13.0, *) {
+                        TextField("Aa", text: $chatViewModel.prompt, axis: .vertical)
+                            .lineLimit(1 ... 5)
                     } else {
-                        Button {
-                            viewModel.showMoreOptions.toggle()
-                        } label: {
-                            Image(systemName: "chevron.compact.up")
-                                .padding(.vertical, 6)
-                        }
-                        .keyboardShortcut(.upArrow)
-                    }
-
-                    Spacer()
-                }
-                if viewModel.showMoreOptions {
-                    HStack {
-                        VoicePicker(selectedVoice: $viewModel.selectedVoice)
-                        muteButton
+                        TextField("Aa", text: $chatViewModel.prompt)
                     }
                 }
-
-                HStack {
-                    Button {
-                        viewModel.clearMessages()
-                    } label: {
-                        Image(systemName: "trash.fill")
-                            .resizable()
-                            .frame(width: 30, height: 30)
-                    }
-                    .tint(.blue)
-                    .keyboardShortcut("d")
-                    if viewModel.showMoreOptions == false {
-                        muteButton
-                    }
-                    micButton
-                    Group {
-                        if #available(iOS 16.0, macOS 13.0, *) {
-                            TextField("prompt", text: $viewModel.prompt, axis: .vertical)
-                                .lineLimit(1 ... 5)
-                        } else {
-                            TextField("prompt", text: $viewModel.prompt)
-                        }
-                    }
-                    .onSubmit {
-                        viewModel.requestAI()
-                    }
-                    .focused($isFocus)
-                    .textFieldStyle(.roundedBorder)
-                    Button {
-                        isFocus = false
-                        viewModel.requestAI()
-                    } label: {
-                        Image(systemName: "paperplane.fill")
-                    }
+                .onSubmit {
+                    chatViewModel.requestAI()
                 }
-                .disabled(viewModel.isLoading)
+                .focused($isFocus)
+                .textFieldStyle(.roundedBorder)
+                Button {
+                    isFocus = false
+                    chatViewModel.requestAI()
+                } label: {
+                    Image(systemName: "paperplane.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: iconSize, height: iconSize)
+                }
             }
+            .disabled(chatViewModel.isLoading)
         }
         .padding()
         .tint(.blue)
@@ -108,58 +88,52 @@ struct ChatView: View {
 
     var muteButton: some View {
         Button {
-            viewModel.isEnableSpeech.toggle()
+            chatViewModel.isEnableSpeech.toggle()
         } label: {
-            if viewModel.isEnableSpeech {
+            if chatViewModel.isEnableSpeech {
                 Image(systemName: "speaker.wave.2.fill")
                     .resizable()
-                    .frame(width: 30, height: 30)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
             } else {
                 Image(systemName: "speaker.slash.fill")
                     .resizable()
-                    .frame(width: 30, height: 30)
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
             }
         }
         .tint(.blue)
     }
 
     var micButton: some View {
-        ZStack {
-            Circle()
-                .foregroundColor(Color.red.opacity(0.3))
-                .frame(width: 50, height: 50)
-                .scaleEffect(animateMicCircle ? 0.9 : 1.2)
-                .animation(Animation.easeInOut(duration: 0.4).repeatForever(autoreverses: false), value: animateMicCircle)
-                .onAppear {
-                    self.animateMicCircle.toggle()
-                }
-                .opacity(viewModel.isRecording ? 1 : 0)
-            Button {
-                if viewModel.isRecording {
-                    viewModel.stopSpeechRecognizer()
-                } else {
-                    isFocus = false
-                    viewModel.startSpeechRecognizer()
-                }
-            } label: {
-                ZStack {
-                    Circle()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(viewModel.isRecording ? .red : .blue)
-
-                    Image(systemName: "mic").foregroundColor(.white)
-                }
+        Button {
+            if chatViewModel.isRecording {
+                chatViewModel.stopSpeechRecognizer()
+            } else {
+                isFocus = false
+                chatViewModel.startSpeechRecognizer()
+            }
+        } label: {
+            if chatViewModel.isRecording {
+                Image(systemName: "mic.fill")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
+            } else {
+                Image(systemName: "mic")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: iconSize, height: iconSize)
             }
         }
-        .buttonStyle(.borderless)
-        .frame(width: 60, height: 50)
+        .tint(.blue)
         .keyboardShortcut("m", modifiers: .shift)
     }
 
     // MARK: - private methods
 
     private func scrollToBottom(proxy: ScrollViewProxy) {
-        guard let id = viewModel.messages.last?.id else { return }
+        guard let id = chatViewModel.messages.last?.id else { return }
         proxy.scrollTo(id, anchor: .bottomTrailing)
     }
 }
