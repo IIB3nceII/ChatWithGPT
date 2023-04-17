@@ -25,6 +25,7 @@ struct ChatGPTService {
         client?.sendCompletion(with: input.trimmingCharacters(in: .whitespacesAndNewlines), completionHandler: { result in
             switch result {
             case .success(let model):
+                print("DEBUG: \(model)")
                 let output = model.choices.first?.text ?? "Something bad happened!"
                 completion(.success(output))
             case .failure(let error):

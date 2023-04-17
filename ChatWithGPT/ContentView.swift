@@ -19,13 +19,7 @@ struct ContentView: View {
     private var items: FetchedResults<Item>
 
     var body: some View {
-        Group {
-            if authViewModel.user == nil || authViewModel.isAuthenticated == false {
-                LoginView()
-            } else {
-                MainTabView()
-            }
-        }
+        MainTabView()
     }
 
     private func addItem() {

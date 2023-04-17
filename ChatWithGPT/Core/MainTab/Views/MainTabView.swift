@@ -16,7 +16,7 @@ struct MainTabView: View {
 
     var body: some View {
         TabView(selection: $selectedIndex) {
-            ChatView(apiKey: authViewModel.user?.apiKey ?? "")
+            ChatView()
                 .onTapGesture {
                     self.selectedIndex = 0
                 }

@@ -9,15 +9,16 @@ import SwiftUI
 
 @main
 struct ChatWithGPTApp: App {
-    @StateObject var viewModel = AuthViewModel()
-    let persistenceController = PersistenceController.shared
+    @AppStorage("hasApiKey") var hasApiKey: Bool = false
 
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                ContentView()
-                    .environmentObject(viewModel)
-                    .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                if hasApiKey {
+                    ContentView()
+                } else {
+                    LoginView()
+                }
             }
         }
     }

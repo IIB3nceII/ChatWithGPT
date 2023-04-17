@@ -9,36 +9,44 @@ import Foundation
 import SwiftUI
 
 struct LoginView: View {
-    /// Env object for auth view model.
-    @EnvironmentObject private var authViewModel: AuthViewModel
-
-    /// State var to store the email address of the user.
-    @State private var email = ""
-
-    /// State var to store the api key of the user.
-    @State private var apiKey = ""
+    @AppStorage("apiKey") var apiKey: String = ""
+    @AppStorage("hasApiKey") var hasApiKey: Bool = false
 
     var body: some View {
-        VStack {
-            VStack(spacing: 14) {
-                FormInputField(text: $email, placeholderText: "Email...")
-                FormInputField(text: $apiKey, placeholderText: "API key...")
+        VStack(alignment: .leading, spacing: 20.0) {
+            Text("Hi, there").font(.title)
 
+            HStack {
+                TextField("API key", text: $apiKey)
+                    .textFieldStyle(.roundedBorder)
                 Button {
-                    authViewModel.createUser(email: email, apiKey: apiKey)
+                    if let string = getClipboardString(),
+                       string.isEmpty == false
+                    {
+                        apiKey = string
+                    }
                 } label: {
-                    Text("Let's chat!")
+                    Image(systemName: "doc.on.clipboard")
                 }
+                .buttonStyle(.borderedProminent)
             }
 
-            // TODO: Uncomment if user management available.
-//            NavigationLink{
-//                RegistrationView()
-//            }label: {
-//                Text("Do not have an account?")
-//            }
+            HStack {
+                Spacer()
+                Button {
+                    if apiKey.isEmpty == false {
+                        hasApiKey = true
+                    }
+                } label: {
+                    Text("Submit")
+                        .font(.headline)
+                }
+                .buttonStyle(.borderedProminent)
+                Spacer()
+            }
         }
         .padding()
+        .tint(.blue)
     }
 }
 

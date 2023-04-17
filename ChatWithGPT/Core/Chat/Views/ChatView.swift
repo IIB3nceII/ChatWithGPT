@@ -8,99 +8,193 @@
 import SwiftUI
 
 struct ChatView: View {
-    /// State variable to store the current value of text input.
-    @State private var text: String = ""
+    @AppStorage("hasApiKey") var hasApiKey: Bool = false
+    @ObservedObject var viewModel = ChatViewModel()
+    @FocusState var isFocus: Bool
+    @State var isPresentedTipView: Bool = false
+    @State private var animateMicCircle = false
 
-    @ObservedObject private var chatViewModel: ChatViewModel
-
-    init(apiKey: String) {
-        chatViewModel = ChatViewModel(apiKey: apiKey)
-    }
+    // MARK: - life cycle
 
     var body: some View {
         VStack {
-            headerView
-            messageView
-            inputView
-        }
-    }
-}
-
-// MARK: - Header View
-
-extension ChatView {
-    var headerView: some View {
-        HStack {
-            Text("ChatGPT is available")
-        }
-    }
-}
-
-// MARK: - Message View
-
-extension ChatView {
-    var messageView: some View {
-        VStack {
-            Spacer()
-            LazyVStack {
+            ScrollViewReader { scrollViewReader in
                 ScrollView {
-                    ForEach(chatViewModel.messages, id: \.self) { message in
-                        Text(message)
+                    LazyVStack {
+                        ForEach(viewModel.messages) { message in
+                            HStack(alignment: .top, spacing: 6) {
+                                VStack {
+                                    switch message.role {
+                                    case .user:
+                                        Image(systemName: "person.circle")
+                                        Text("You")
+                                    case .system:
+                                        Image(systemName: "person.icloud")
+                                        Text("AI")
+                                    }
+                                }
+                                .font(.headline)
+                                VStack(alignment: .leading) {
+                                    Text(message.text)
+                                    Text(message.errorText)
+                                        .foregroundColor(Color.pink)
+                                    if message.isInteracting {
+                                        LoadingView()
+                                    }
+                                }
+                                Spacer()
+                                Button {
+                                    copyToClipboard(text: message.text.trimmed)
+                                } label: {
+                                    Image(systemName: "doc.on.doc")
+                                }
+                            }
+                            .padding()
+                            .background(message.role == .user ? Color.clear : Color.gray.opacity(0.1))
+                        }
                     }
                 }
+                .onTapGesture {
+                    isFocus = false
+                }
+                .onChange(of: viewModel.messages.last?.text) { _ in
+                    scrollToBottom(proxy: scrollViewReader)
+                }
+                .onChange(of: viewModel.messages.last?.errorText) { _ in
+                    scrollToBottom(proxy: scrollViewReader)
+                }
             }
-            Spacer()
-        }
-    }
-}
-
-// MARK: - Input View
-
-extension ChatView {
-    func handleSendMessage(_ text: String) {
-        chatViewModel.sendMessage(text) { success in
-            if success {
-                self.text = ""
-            }
-        }
-    }
-
-    func onSpeechToText() {
-        chatViewModel.onTranscribeStartStop()
-        if let message = chatViewModel.latestMessage {
-            text = message
-        }
-    }
-
-    var inputView: some View {
-        HStack(spacing: 16) {
-            Button{
-                self.onSpeechToText()
-            }label: {
-                Image(systemName: chatViewModel.isRecording ? "mic.fill" : "mic")
-            }
-
-            TextField("type something...", text: $text)
-                .submitLabel(.send)
-                .onSubmit {
-                    self.handleSendMessage(self.text)
+            VStack(alignment: .leading) {
+                HStack {
+                    if viewModel.showMoreOptions {
+                        Button {
+                            viewModel.showMoreOptions.toggle()
+                        } label: {
+                            Image(systemName: "chevron.compact.down")
+                                .padding(.vertical, 6)
+                        }
+                        .keyboardShortcut(.downArrow)
+                    } else {
+                        Button {
+                            viewModel.showMoreOptions.toggle()
+                        } label: {
+                            Image(systemName: "chevron.compact.up")
+                                .padding(.vertical, 6)
+                        }
+                        .keyboardShortcut(.upArrow)
+                    }
+                    Button {
+                        hasApiKey = false
+                    } label: {
+                        Image(systemName: "gear")
+                    }
+                    .keyboardShortcut(",")
+                    Button {
+                        viewModel.clearMessages()
+                    } label: {
+                        Image(systemName: "trash.circle.fill")
+                    }
+                    .tint(.pink)
+                    .keyboardShortcut("d")
+                    if viewModel.showMoreOptions == false {
+                        muteButton
+                    }
+                    Spacer()
+                }
+                if viewModel.showMoreOptions {
+                    HStack {
+                        VoicePicker(selectedVoice: $viewModel.selectedVoice)
+                        muteButton
+                    }
                 }
 
-            Button {
-                self.handleSendMessage(self.text)
+                HStack {
+                    micButton
+                    Group {
+                        if #available(iOS 16.0, macOS 13.0, *) {
+                            TextField("prompt", text: $viewModel.prompt, axis: .vertical)
+                                .lineLimit(1 ... 5)
+                        } else {
+                            TextField("prompt", text: $viewModel.prompt)
+                        }
+                    }
+                    .onSubmit {
+                        viewModel.requestAI()
+                    }
+                    .focused($isFocus)
+                    .textFieldStyle(.roundedBorder)
+                    Button {
+                        isFocus = false
+                        viewModel.requestAI()
+                    } label: {
+                        Text("Send")
+                    }
+                }
+                .disabled(viewModel.isLoading)
             }
-            label: {
-                Image(systemName: "paperplane.fill")
-            }
-            .disabled(text == "")
         }
-        .padding(.horizontal)
-        .padding(.bottom, 12)
+        .padding()
+        .tint(.blue)
+        .buttonStyle(.borderedProminent)
+    }
+
+    var muteButton: some View {
+        Button {
+            viewModel.isEnableSpeech.toggle()
+        } label: {
+            if viewModel.isEnableSpeech {
+                Image(systemName: "speaker.wave.2.circle.fill")
+            } else {
+                Image(systemName: "speaker.slash.circle.fill")
+            }
+        }
+        .tint(viewModel.isEnableSpeech ? Color.green : Color.pink)
+        .keyboardShortcut("v", modifiers: .shift)
+    }
+
+    var micButton: some View {
+        ZStack {
+            Circle()
+                .foregroundColor(Color.red.opacity(0.3))
+                .frame(width: 50, height: 50)
+                .scaleEffect(animateMicCircle ? 0.9 : 1.2)
+                .animation(Animation.easeInOut(duration: 0.4).repeatForever(autoreverses: false), value: animateMicCircle)
+                .onAppear {
+                    self.animateMicCircle.toggle()
+                }
+                .opacity(viewModel.isRecording ? 1 : 0)
+            Button {
+                if viewModel.isRecording {
+                    viewModel.stopSpeechRecognizer()
+                } else {
+                    isFocus = false
+                    viewModel.startSpeechRecognizer()
+                }
+            } label: {
+                ZStack {
+                    Circle()
+                        .frame(width: 40, height: 40)
+                        .foregroundColor(viewModel.isRecording ? .red : .blue)
+
+                    Image(systemName: "mic").foregroundColor(.white)
+                }
+            }
+        }
+        .buttonStyle(.borderless)
+        .frame(width: 60, height: 50)
+        .keyboardShortcut("m", modifiers: .shift)
+    }
+
+    // MARK: - private methods
+
+    private func scrollToBottom(proxy: ScrollViewProxy) {
+        guard let id = viewModel.messages.last?.id else { return }
+        proxy.scrollTo(id, anchor: .bottomTrailing)
     }
 }
 
-struct ChatView_Previews: PreviewProvider {
+struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ChatView(apiKey: "")
+        ChatView()
     }
 }
