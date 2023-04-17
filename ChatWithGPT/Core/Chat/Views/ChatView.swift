@@ -83,22 +83,7 @@ struct ChatView: View {
                         }
                         .keyboardShortcut(.upArrow)
                     }
-                    Button {
-                        hasApiKey = false
-                    } label: {
-                        Image(systemName: "gear")
-                    }
-                    .keyboardShortcut(",")
-                    Button {
-                        viewModel.clearMessages()
-                    } label: {
-                        Image(systemName: "trash.circle.fill")
-                    }
-                    .tint(.pink)
-                    .keyboardShortcut("d")
-                    if viewModel.showMoreOptions == false {
-                        muteButton
-                    }
+
                     Spacer()
                 }
                 if viewModel.showMoreOptions {
@@ -109,6 +94,18 @@ struct ChatView: View {
                 }
 
                 HStack {
+                    Button {
+                        viewModel.clearMessages()
+                    } label: {
+                        Image(systemName: "trash.fill")
+                            .resizable()
+                            .frame(width: 30, height: 30)
+                    }
+                    .tint(.blue)
+                    .keyboardShortcut("d")
+                    if viewModel.showMoreOptions == false {
+                        muteButton
+                    }
                     micButton
                     Group {
                         if #available(iOS 16.0, macOS 13.0, *) {
@@ -127,7 +124,7 @@ struct ChatView: View {
                         isFocus = false
                         viewModel.requestAI()
                     } label: {
-                        Text("Send")
+                        Image(systemName: "paperplane.fill")
                     }
                 }
                 .disabled(viewModel.isLoading)
@@ -135,7 +132,6 @@ struct ChatView: View {
         }
         .padding()
         .tint(.blue)
-        .buttonStyle(.borderedProminent)
     }
 
     var muteButton: some View {
@@ -143,13 +139,16 @@ struct ChatView: View {
             viewModel.isEnableSpeech.toggle()
         } label: {
             if viewModel.isEnableSpeech {
-                Image(systemName: "speaker.wave.2.circle.fill")
+                Image(systemName: "speaker.wave.2.fill")
+                    .resizable()
+                    .frame(width: 30, height: 30)
             } else {
-                Image(systemName: "speaker.slash.circle.fill")
+                Image(systemName: "speaker.slash.fill")
+                    .resizable()
+                    .frame(width: 30, height: 30)
             }
         }
-        .tint(viewModel.isEnableSpeech ? Color.green : Color.pink)
-        .keyboardShortcut("v", modifiers: .shift)
+        .tint(.blue)
     }
 
     var micButton: some View {
