@@ -20,37 +20,9 @@ struct ChatView: View {
         VStack {
             ScrollViewReader { scrollViewReader in
                 ScrollView {
-                    LazyVStack {
+                    LazyVStack(spacing: 16) {
                         ForEach(viewModel.messages) { message in
-                            HStack(alignment: .top, spacing: 6) {
-                                VStack {
-                                    switch message.role {
-                                    case .user:
-                                        Image(systemName: "person.circle")
-                                        Text("You")
-                                    case .system:
-                                        Image(systemName: "person.icloud")
-                                        Text("AI")
-                                    }
-                                }
-                                .font(.headline)
-                                VStack(alignment: .leading) {
-                                    Text(message.text)
-                                    Text(message.errorText)
-                                        .foregroundColor(Color.pink)
-                                    if message.isInteracting {
-                                        LoadingView()
-                                    }
-                                }
-                                Spacer()
-                                Button {
-                                    copyToClipboard(text: message.text.trimmed)
-                                } label: {
-                                    Image(systemName: "doc.on.doc")
-                                }
-                            }
-                            .padding()
-                            .background(message.role == .user ? Color.clear : Color.gray.opacity(0.1))
+                            MessageCellView(message: message)
                         }
                     }
                 }

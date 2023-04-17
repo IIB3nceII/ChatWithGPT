@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct LoadingView: View {
-    let color: Color = .blue
+    let color: Color = .white
     let width: CGFloat = 10
     @State private var shouldAnimate = false
 
