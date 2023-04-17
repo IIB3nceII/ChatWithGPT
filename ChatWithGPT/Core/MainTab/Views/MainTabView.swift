@@ -8,9 +8,6 @@
 import SwiftUI
 
 struct MainTabView: View {
-    /// Environment object for auth view model.
-    @EnvironmentObject private var authViewModel: AuthViewModel
-
     /// State variable to store the current tab index.
     @State private var selectedIndex = 0
 
@@ -26,7 +23,7 @@ struct MainTabView: View {
 
             SettingsView()
                 .onTapGesture {
-                    self.selectedIndex = 0
+                    self.selectedIndex = 1
                 }
                 .tabItem {
                     Image(systemName: "transmission")
